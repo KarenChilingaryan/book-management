@@ -1,4 +1,3 @@
-// src/authors/authors.controller.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthorsController } from './authors.controller';
 import { AuthorsService } from './authors.service';

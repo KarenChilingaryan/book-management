@@ -1,4 +1,3 @@
-// src/authors/authors.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthorsService } from './authors.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
