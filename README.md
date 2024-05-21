@@ -7,7 +7,7 @@ This is a RESTful API for managing books and authors, built using NestJS, TypeSc
 - CRUD operations for books and authors
 - JWT-based authentication
 - Input validation and error handling
-- Swagger documentation
+- Swagger documentation - baseUrl+/api/docs
 
 ## Tech Stack
 
