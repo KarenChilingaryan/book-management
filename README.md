@@ -2,19 +2,6 @@
 
 This is a RESTful API for managing books and authors, built using NestJS, TypeScript, and MySQL. The API supports CRUD operations for books and authors, and includes JWT-based authentication.
 
-## Table of Contents
-
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running the Application](#running-the-application)
-  - [Testing](#testing)
-- [API Documentation](#api-documentation)
-- [Project Structure](#project-structure)
-- [License](#license)
-
 ## Features
 
 - CRUD operations for books and authors
