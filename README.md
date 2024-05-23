@@ -19,6 +19,8 @@ This is a RESTful API for managing books and authors, built using NestJS, TypeSc
 - Passport.js
 - JWT
 - Swagger
+- Jest
+- Joi
 
 ## Getting Started
 
