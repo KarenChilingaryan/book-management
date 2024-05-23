@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('books')
 @ApiBearerAuth()
@@ -13,6 +13,7 @@ export class BooksController {
   constructor(private readonly booksService: BooksService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe({ transform: true }))
   @ApiOperation({ summary: 'Create a new book' })
   @ApiBody({ type: CreateBookDto })
   @ApiResponse({ status: 201, description: 'The book has been successfully created.' })
@@ -39,6 +40,7 @@ export class BooksController {
   }
 
   @Patch(':id')
+  @UsePipes(new ValidationPipe({ transform: true }))
   @ApiOperation({ summary: 'Update a book by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the book' })
   @ApiBody({ type: UpdateBookDto })

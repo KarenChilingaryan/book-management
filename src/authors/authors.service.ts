@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Author } from './author.entity';
@@ -12,28 +12,44 @@ export class AuthorsService {
     private authorsRepository: Repository<Author>,
   ) {}
 
-  create(createAuthorDto: CreateAuthorDto): Promise<Author> {
+  async create(createAuthorDto: CreateAuthorDto): Promise<Author> {
     const author = this.authorsRepository.create(createAuthorDto);
-    return this.authorsRepository.save(author);
+    try {
+      return await this.authorsRepository.save(author);
+    } catch (error) {
+      throw new BadRequestException('Invalid data');
+    }
   }
 
   findAll(): Promise<Author[]> {
     return this.authorsRepository.find({ relations: ['books'] });
   }
 
-  findOne(id: number): Promise<Author> {
-    return this.authorsRepository.findOne({
+  async findOne(id: number): Promise<Author> {
+    const author = await this.authorsRepository.findOne({
       where: { id },
       relations: ['books'],
     });
+    if (!author) {
+      throw new NotFoundException(`Author with ID ${id} not found`);
+    }
+    return author;
   }
 
   async update(id: number, updateAuthorDto: UpdateAuthorDto): Promise<Author> {
-    await this.authorsRepository.update(id, updateAuthorDto);
-    return this.findOne(id);
+    const author = await this.findOne(id);
+    Object.assign(author, updateAuthorDto);
+    try {
+      return await this.authorsRepository.save(author);
+    } catch (error) {
+      throw new BadRequestException('Invalid data');
+    }
   }
 
   async remove(id: number): Promise<void> {
-    await this.authorsRepository.delete(id);
+    const result = await this.authorsRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Author with ID ${id} not found`);
+    }
   }
 }

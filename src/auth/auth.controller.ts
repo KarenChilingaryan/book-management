@@ -1,6 +1,6 @@
-import { Controller, Post, UseGuards, Request, Body } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Body, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './local-auth.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 import { Public } from './public.decorator';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
@@ -14,6 +14,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @UseGuards(LocalAuthGuard)
+  @UsePipes(new ValidationPipe({ transform: true }))
   @ApiOperation({ summary: 'Log in' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 201, description: 'Successfully logged in', schema: { example: { access_token: 'your_jwt_token' } } })
@@ -24,6 +25,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @UsePipes(new ValidationPipe({ transform: true }))
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({ status: 201, description: 'Successfully registered' })

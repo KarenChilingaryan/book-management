@@ -17,9 +17,9 @@ export class Author {
   biography: string;
 
   @Column()
-  @ApiProperty({ example: '1990-01-01', description: 'The birth date of the author' })
-  dateOfBirth: string;
+  @ApiProperty({ example: '2000-01-01', description: 'The birth date of the author' })
+  dateOfBirth: Date;
 
-  @OneToMany(() => Book, (book) => book.author)
+  @OneToMany(() => Book, (book) => book.author, { cascade: true })
   books: Book[];
 }

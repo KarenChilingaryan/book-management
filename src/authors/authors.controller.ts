@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AuthorsService } from './authors.service';
 import { CreateAuthorDto } from './dto/create-author.dto';
 import { UpdateAuthorDto } from './dto/update-author.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('authors')
 @ApiBearerAuth()
@@ -13,6 +13,7 @@ export class AuthorsController {
   constructor(private readonly authorsService: AuthorsService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe({ transform: true }))
   @ApiOperation({ summary: 'Create a new author' })
   @ApiBody({ type: CreateAuthorDto })
   @ApiResponse({ status: 201, description: 'The author has been successfully created.' })
@@ -39,6 +40,7 @@ export class AuthorsController {
   }
 
   @Patch(':id')
+  @UsePipes(new ValidationPipe({ transform: true }))
   @ApiOperation({ summary: 'Update an author by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the author' })
   @ApiBody({ type: UpdateAuthorDto })

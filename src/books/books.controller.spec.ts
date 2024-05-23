@@ -8,19 +8,21 @@ describe('BooksController', () => {
   let controller: BooksController;
   let service: BooksService;
 
+  const mockBooksService = {
+    create: jest.fn(),
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+    update: jest.fn(),
+    remove: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BooksController],
       providers: [
         {
           provide: BooksService,
-          useValue: {
-            create: jest.fn().mockResolvedValue({}),
-            findAll: jest.fn().mockResolvedValue([]),
-            findOne: jest.fn().mockResolvedValue({}),
-            update: jest.fn().mockResolvedValue({}),
-            remove: jest.fn().mockResolvedValue({}),
-          },
+          useValue: mockBooksService,
         },
       ],
     }).compile();
@@ -34,49 +36,48 @@ describe('BooksController', () => {
   });
 
   describe('create', () => {
-    it('should create a book', async () => {
-      const createBookDto: CreateBookDto = {
-        title: 'Test Book',
-        isbn: '1234567890',
-        publishedDate: new Date().toISOString(),
-        authorId: 1,
-      };
-      const result = await controller.create(createBookDto);
-      expect(result).toEqual({});
-      expect(service.create).toHaveBeenCalledWith(createBookDto);
+    it('should create a new book', async () => {
+      const createBookDto: CreateBookDto = { title: 'The Great Book', isbn: '123-456-789', publishedDate: new Date(), authorId: 1 };
+      const savedBook = { id: 1, ...createBookDto };
+
+      mockBooksService.create.mockResolvedValue(savedBook);
+      expect(await controller.create(createBookDto)).toEqual(savedBook);
     });
   });
 
   describe('findAll', () => {
     it('should return an array of books', async () => {
-      const result = await controller.findAll();
-      expect(result).toEqual([]);
-      expect(service.findAll).toHaveBeenCalled();
+      const books = [{ id: 1, title: 'The Great Book', isbn: '123-456-789', publishedDate: new Date(), author: { id: 1 } }];
+      mockBooksService.findAll.mockResolvedValue(books);
+
+      expect(await controller.findAll()).toEqual(books);
     });
   });
 
   describe('findOne', () => {
-    it('should return a single book', async () => {
-      const result = await controller.findOne('1');
-      expect(result).toEqual({});
-      expect(service.findOne).toHaveBeenCalledWith(1);
+    it('should return a book by id', async () => {
+      const book = { id: 1, title: 'The Great Book', isbn: '123-456-789', publishedDate: new Date(), author: { id: 1 } };
+      mockBooksService.findOne.mockResolvedValue(book);
+
+      expect(await controller.findOne('1')).toEqual(book);
     });
   });
 
   describe('update', () => {
     it('should update a book', async () => {
-      const updateBookDto: UpdateBookDto = { title: 'Updated Test Book' };
-      const result = await controller.update('1', updateBookDto);
-      expect(result).toEqual({});
-      expect(service.update).toHaveBeenCalledWith(1, updateBookDto);
+      const updateBookDto: UpdateBookDto = { title: 'Updated Title', isbn: '987-654-321', publishedDate: new Date(), authorId: 1 };
+      const updatedBook = { id: 1, ...updateBookDto };
+
+      mockBooksService.update.mockResolvedValue(updatedBook);
+      expect(await controller.update('1', updateBookDto)).toEqual(updatedBook);
     });
   });
 
   describe('remove', () => {
     it('should delete a book', async () => {
-      const result = await controller.remove('1');
-      expect(result).toEqual({});
-      expect(service.remove).toHaveBeenCalledWith(1);
+      mockBooksService.remove.mockResolvedValue(undefined);
+
+      expect(await controller.remove('1')).toBeUndefined();
     });
   });
 });

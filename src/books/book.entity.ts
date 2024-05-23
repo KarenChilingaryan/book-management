@@ -17,8 +17,8 @@ export class Book {
   isbn: string;
 
   @Column()
-  @ApiProperty({ example: '2023-01-01', description: 'The published date of the book' })
-  publishedDate: string;
+  @ApiProperty({ example: new Date(), description: 'The published date of the book' })
+  publishedDate: Date;
 
   @ManyToOne(() => Author, (author) => author.books)
   @ApiProperty({ type: () => Author, description: 'The author of the book' })

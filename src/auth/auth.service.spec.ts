@@ -1,10 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
-import { User } from './user.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
+import { AuthService } from './auth.service';
+import { User } from './user.entity';
+import { BadRequestException } from '@nestjs/common';
 
 const mockUserRepository = () => ({
   findOne: jest.fn(),
@@ -12,73 +13,79 @@ const mockUserRepository = () => ({
   save: jest.fn(),
 });
 
-const mockJwtService = () => ({
-  sign: jest.fn(),
-});
-
 describe('AuthService', () => {
-  let authService: AuthService;
-  let userRepository;
-  let jwtService;
+  let service: AuthService;
+  let repository;
+  let jwtService: JwtService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        { provide: getRepositoryToken(User), useFactory: mockUserRepository },
-        { provide: JwtService, useFactory: mockJwtService },
+        {
+          provide: JwtService,
+          useValue: {
+            sign: jest.fn().mockImplementation((payload) => `mockToken-${payload.username}`),
+          },
+        },
+        {
+          provide: getRepositoryToken(User),
+          useFactory: mockUserRepository,
+        },
       ],
     }).compile();
 
-    authService = module.get<AuthService>(AuthService);
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+    service = module.get<AuthService>(AuthService);
+    repository = module.get<Repository<User>>(getRepositoryToken(User));
     jwtService = module.get<JwtService>(JwtService);
+  });
 
-    jest.spyOn(bcrypt, 'hash').mockImplementation(() => Promise.resolve('hashedPassword'));
-    jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('register', () => {
+    it('should register a new user', async () => {
+      const registerDto = { username: 'john_doe', password: 'password123' };
+      const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+      const savedUser = { id: 1, username: registerDto.username, password: hashedPassword };
+
+      repository.findOne.mockResolvedValue(null);
+      repository.create.mockReturnValue(savedUser);
+      repository.save.mockResolvedValue(savedUser);
+
+      expect(await service.register(registerDto.username, registerDto.password)).toEqual(savedUser);
+    });
+
+    it('should throw a BadRequestException if username already exists', async () => {
+      const registerDto = { username: 'john_doe', password: 'password123' };
+
+      repository.findOne.mockResolvedValue({ id: 1, username: registerDto.username, password: 'hashedpassword' });
+
+      await expect(service.register(registerDto.username, registerDto.password)).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('validateUser', () => {
-    it('should return user if validation succeeds', async () => {
-      const user = new User();
-      user.username = 'test';
-      user.password = 'hashedPassword';
-      userRepository.findOne.mockResolvedValue(user);
+    it('should validate a user with correct credentials', async () => {
+      const user = { id: 1, username: 'john_doe', password: await bcrypt.hash('password123', 10) };
 
-      const result = await authService.validateUser('test', 'testpassword');
-      expect(result).toBeDefined();
-      expect(result.username).toBe('test');
+      repository.findOne.mockResolvedValue(user);
+      expect(await service.validateUser(user.username, 'password123')).toEqual({ id: user.id, username: user.username });
     });
 
-    it('should return null if validation fails', async () => {
-      userRepository.findOne.mockResolvedValue(null);
-
-      const result = await authService.validateUser('test', 'testpassword');
-      expect(result).toBeNull();
+    it('should return null for invalid credentials', async () => {
+      repository.findOne.mockResolvedValue(null);
+      expect(await service.validateUser('john_doe', 'wrongpassword')).toBeNull();
     });
   });
 
   describe('login', () => {
-    it('should return access token', async () => {
-      const user = { username: 'test', id: 1 };
-      jwtService.sign.mockReturnValue('testtoken');
+    it('should return a JWT token', async () => {
+      const user = { id: 1, username: 'john_doe' };
+      const result = await service.login(user);
 
-      const result = await authService.login(user);
-      expect(result).toEqual({ access_token: 'testtoken' });
-    });
-  });
-
-  describe('register', () => {
-    it('should create and save a new user', async () => {
-      const user = { username: 'test', password: 'hashedPassword' };
-      const savedUser = new User();
-      userRepository.create.mockReturnValue(user);
-      userRepository.save.mockResolvedValue(savedUser);
-
-      const result = await authService.register('test', 'testpassword');
-      expect(result).toEqual(savedUser);
-      expect(userRepository.create).toHaveBeenCalledWith(user);
-      expect(userRepository.save).toHaveBeenCalledWith(user);
+      expect(result).toHaveProperty('access_token', 'mockToken-john_doe');
     });
   });
 });
