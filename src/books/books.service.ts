@@ -12,7 +12,7 @@ export class BooksService {
     @InjectRepository(Book)
     private booksRepository: Repository<Book>,
     private authorsService: AuthorsService,
-  ) {}
+  ) { }
 
   async create(createBookDto: CreateBookDto): Promise<Book> {
     const author = await this.authorsService.findOne(createBookDto.authorId);

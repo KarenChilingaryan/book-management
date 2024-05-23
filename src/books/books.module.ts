@@ -10,4 +10,4 @@ import { AuthorsModule } from 'src/authors/authors.module';
   providers: [BooksService],
   controllers: [BooksController],
 })
-export class BooksModule {}
+export class BooksModule { }

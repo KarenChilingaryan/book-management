@@ -20,7 +20,7 @@ export class Book {
   @ApiProperty({ example: new Date(), description: 'The published date of the book' })
   publishedDate: Date;
 
-  @ManyToOne(() => Author, (author) => author.books)
+  @ManyToOne(() => Author, (author) => author.books, { onDelete: 'CASCADE' })
   @ApiProperty({ type: () => Author, description: 'The author of the book' })
   author: Author;
 }
