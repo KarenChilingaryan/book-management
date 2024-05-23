@@ -44,6 +44,10 @@ Before you begin, ensure you have the following installed:
   $ yarn install
   ```
 
+## Running migrations
+```bash
+$ yarn migration:run
+```
 ## Running the app
 
 ```bash
