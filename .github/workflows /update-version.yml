@@ -1,7 +1,10 @@
-name: Increment Version
+name: Update Version
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
@@ -10,32 +13,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Ensure jq is available
-        run: |
-          if ! command -v jq &> /dev/null; then
-            echo "jq could not be found, installing..."
-            sudo apt-get update && sudo apt-get install -y jq
-          else
-            echo "jq is already installed"
-          fi
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
 
-      - name: Increment version number
-        id: increment_version
-        run: |
-          VERSION=$(jq -r '.version' version.json)
-          NEW_VERSION=$((VERSION + 1))
-          echo "New version: $NEW_VERSION"
-          echo "{\"version\": $NEW_VERSION}" > version.json
+    - name: Install dependencies
+      run: npm install
 
-      - name: Commit and push changes
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add version.json
-          git commit -m "Increment version to $NEW_VERSION"
-          git push
-        env:
-          MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+    - name: Update version in JSON file
+      run: |
+        VERSION=$(git describe --tags --abbrev=0)
+        echo "Updating version to $VERSION"
+        echo "{\"version\": \"$VERSION\"}" > version.json
+
+    - name: Commit and push changes
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add version.json
+        git commit -m "Update version to $VERSION"
+        git push
+      env:
+        MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
