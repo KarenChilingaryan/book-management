@@ -3,7 +3,7 @@ name: Increment Version
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   update-version:
