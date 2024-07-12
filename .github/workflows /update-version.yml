@@ -16,56 +16,36 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Increment version in JSON file
+    - name: Increment version
+      id: increment_version
       run: |
-        VERSION_FILE=version.json
+        CURRENT_VERSION=${{ secrets.APP_VERSION }}
+        NEW_VERSION=$((CURRENT_VERSION + 1))
+        echo "Current version: $CURRENT_VERSION"
+        echo "New version: $NEW_VERSION"
+        echo "::set-output name=new_version::$NEW_VERSION"
 
-        # Debug: Check if the file exists
-        if [ ! -f "$VERSION_FILE" ]; then
-          echo "$VERSION_FILE does not exist"
-          exit 1
-        fi
-
-        echo "Current version file content:"
-        cat $VERSION_FILE
-
-        # Debug: Check if jq is installed
-        if ! command -v jq &> /dev/null; then
-          echo "jq could not be found"
-          exit 1
-        fi
-
-        VERSION=$(jq .version $VERSION_FILE)
-        
-        # Debug: Check if version is retrieved correctly
-        if [ -z "$VERSION" ]; then
-          echo "Failed to retrieve version from $VERSION_FILE"
-          exit 1
-        fi
-
-        echo "Current version is $VERSION"
-        
-        NEW_VERSION=$((VERSION + 1))
-        
-        # Debug: Check if new version is calculated correctly
-        if [ -z "$NEW_VERSION" ]; then
-          echo "Failed to calculate new version"
-          exit 1
-        fi
-
-        echo "New version is $NEW_VERSION"
-        
-        jq --arg new_version "$NEW_VERSION" '.version=($new_version | tonumber)' $VERSION_FILE > temp.json && mv temp.json $VERSION_FILE
-
+    - name: Update version.json
+      run: |
+        NEW_VERSION=${{ steps.increment_version.outputs.new_version }}
+        jq --arg new_version "$NEW_VERSION" '.version=($new_version | tonumber)' version.json > temp.json && mv temp.json version.json
         echo "Updated version file content:"
-        cat $VERSION_FILE
+        cat version.json
 
     - name: Commit and push changes
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         git add version.json
-        git commit -m "Increment version to $NEW_VERSION"
+        git commit -m "Increment version to ${{ steps.increment_version.outputs.new_version }}"
         git push
       env:
         MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+
+    - name: Update GitHub Secret
+      uses: hmanzur/actions-set-secret@v2.0.0
+      with:
+        name: 'APP_VERSION'
+        value: ${{ steps.increment_version.outputs.new_version }}
+        repository: ${{ github.repository }}
+        token: ${{ secrets.MY_GITHUB_TOKEN }}
