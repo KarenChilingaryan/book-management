@@ -58,6 +58,7 @@ export class BooksService {
       throw new BadRequestException('Invalid data');
     }
   }
+  
 
   async remove(id: number): Promise<void> {
     const result = await this.booksRepository.delete(id);
