@@ -16,36 +16,30 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Increment version
-      id: increment_version
+    - name: Set new version of app
+      id: set_version
+      env:
+         CURRENT_VERSION: ${{ secrets.APP_VERSION }}
       run: |
-        CURRENT_VERSION=${{ secrets.APP_VERSION }}
-        NEW_VERSION=$((CURRENT_VERSION + 1))
-        echo "Current version: $CURRENT_VERSION"
-        echo "New version: $NEW_VERSION"
-        echo "::set-output name=new_version::$NEW_VERSION"
-
-    - name: Update version.json
-      run: |
-        NEW_VERSION=${{ steps.increment_version.outputs.new_version }}
-        jq --arg new_version "$NEW_VERSION" '.version=($new_version | tonumber)' version.json > temp.json && mv temp.json version.json
-        echo "Updated version file content:"
-        cat version.json
+         echo "Current version from secret: $CURRENT_VERSION"
+         NEW_VERSION=$((CURRENT_VERSION + 1))
+         echo "New version: $NEW_VERSION"
+         echo "{\"version\": $NEW_VERSION}" > version.json
+         echo "CURRENT_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
     - name: Commit and push changes
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         git add version.json
-        git commit -m "Increment version to ${{ steps.increment_version.outputs.new_version }}"
+        git commit -m "Increment version to ${{ env.CURRENT_VERSION }}"
         git push
       env:
         MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
 
-    - name: Update GitHub Secret
+    - name: Update GitHub repo secret for future app builds
       uses: hmanzur/actions-set-secret@v2.0.0
       with:
         name: 'APP_VERSION'
-        value: ${{ steps.increment_version.outputs.new_version }}
-        repository: ${{ github.repository }}
+        value: ${{ env.CURRENT_VERSION }}
         token: ${{ secrets.MY_GITHUB_TOKEN }}
