@@ -16,17 +16,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
-
     - name: Increment version in JSON file
       run: |
         VERSION_FILE=version.json
         VERSION=$(jq .version $VERSION_FILE)
         NEW_VERSION=$((VERSION + 1))
-        jq --arg new_version "$NEW_VERSION" '.version=$new_version' $VERSION_FILE > temp.json && mv temp.json $VERSION_FILE
+        jq --arg new_version "$NEW_VERSION" '.version=($new_version | tonumber)' $VERSION_FILE > temp.json && mv temp.json $VERSION_FILE
         echo "Updated version to $NEW_VERSION"
 
     - name: Commit and push changes
