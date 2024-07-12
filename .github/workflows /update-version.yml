@@ -21,21 +21,20 @@ jobs:
       with:
         node-version: '14'
 
-    - name: Install dependencies
-      run: npm install
-
-    - name: Update version in JSON file
+    - name: Increment version in JSON file
       run: |
-        VERSION=$(git describe --tags --abbrev=0)
-        echo "Updating version to $VERSION"
-        echo "{\"version\": \"$VERSION\"}" > version.json
+        VERSION_FILE=version.json
+        VERSION=$(jq .version $VERSION_FILE)
+        NEW_VERSION=$((VERSION + 1))
+        jq --arg new_version "$NEW_VERSION" '.version=$new_version' $VERSION_FILE > temp.json && mv temp.json $VERSION_FILE
+        echo "Updated version to $NEW_VERSION"
 
     - name: Commit and push changes
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         git add version.json
-        git commit -m "Update version to $VERSION"
+        git commit -m "Increment version to $NEW_VERSION"
         git push
       env:
-        MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
