@@ -19,13 +19,44 @@ jobs:
     - name: Increment version in JSON file
       run: |
         VERSION_FILE=version.json
+
+        # Debug: Check if the file exists
+        if [ ! -f "$VERSION_FILE" ]; then
+          echo "$VERSION_FILE does not exist"
+          exit 1
+        fi
+
         echo "Current version file content:"
         cat $VERSION_FILE
+
+        # Debug: Check if jq is installed
+        if ! command -v jq &> /dev/null; then
+          echo "jq could not be found"
+          exit 1
+        fi
+
         VERSION=$(jq .version $VERSION_FILE)
+        
+        # Debug: Check if version is retrieved correctly
+        if [ -z "$VERSION" ]; then
+          echo "Failed to retrieve version from $VERSION_FILE"
+          exit 1
+        fi
+
         echo "Current version is $VERSION"
+        
         NEW_VERSION=$((VERSION + 1))
+        
+        # Debug: Check if new version is calculated correctly
+        if [ -z "$NEW_VERSION" ]; then
+          echo "Failed to calculate new version"
+          exit 1
+        fi
+
         echo "New version is $NEW_VERSION"
+        
         jq --arg new_version "$NEW_VERSION" '.version=($new_version | tonumber)' $VERSION_FILE > temp.json && mv temp.json $VERSION_FILE
+
         echo "Updated version file content:"
         cat $VERSION_FILE
 
