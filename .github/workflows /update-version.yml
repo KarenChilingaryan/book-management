@@ -19,10 +19,15 @@ jobs:
     - name: Increment version in JSON file
       run: |
         VERSION_FILE=version.json
+        echo "Current version file content:"
+        cat $VERSION_FILE
         VERSION=$(jq .version $VERSION_FILE)
+        echo "Current version is $VERSION"
         NEW_VERSION=$((VERSION + 1))
+        echo "New version is $NEW_VERSION"
         jq --arg new_version "$NEW_VERSION" '.version=($new_version | tonumber)' $VERSION_FILE > temp.json && mv temp.json $VERSION_FILE
-        echo "Updated version to $NEW_VERSION"
+        echo "Updated version file content:"
+        cat $VERSION_FILE
 
     - name: Commit and push changes
       run: |
